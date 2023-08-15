@@ -4,6 +4,9 @@ from bs4 import BeautifulSoup
 from sklearn.linear_model import LinearRegression
 from sklearn.feature_extraction.text import TfidfVectorizer
 import matplotlib.pyplot as plt
+from keras.applications.vgg16 import VGG16
+from keras.preprocessing import image
+from keras.applications.vgg16 import preprocess_input
 
 
 class GenesisMind:
@@ -13,14 +16,23 @@ class GenesisMind:
         self.model = LinearRegression()
         self.vectorizer = TfidfVectorizer()
         self.memory = []
+        self.image_model = VGG16(weights='imagenet', include_top=False)
 
     def perceive(self, data, data_type="text"):
-        """
-        Process the incoming data and update the mind's state.
-        """
         if data_type == "text":
             vectorized_data = self.vectorizer.transform([data]).toarray()
             self.past_data.append(vectorized_data[0])
+        elif data_type == "image":
+            vectorized_data = self._process_image(data)
+            self.past_data.append(vectorized_data)
+
+    def _process_image(self, img_path):
+        img = image.load_img(img_path, target_size=(224, 224))
+        x = image.img_to_array(img)
+        x = np.expand_dims(x, axis=0)
+        x = preprocess_input(x)
+        features = self.image_model.predict(x)
+        return features.flatten()
 
     def predict(self, data, top_n=10):
         """
@@ -86,9 +98,13 @@ class GenesisMind:
         # For simplicity, return the last remembered item
         return self.memory[-1] if self.memory else None
 
+    def feedback(self, data, correct_data):
+        # Placeholder for feedback mechanism
+        pass
+
     def evaluate(self):
         # Placeholder for self-evaluation mechanisms
-        pass
+        return "Evaluation result"
 
     def adapt(self):
         # Placeholder for adaptation mechanisms

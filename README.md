@@ -1,6 +1,6 @@
 # GenesisMind
 
-GenesisMind is a conceptual artificial intelligence model that fetches, perceives, and predicts textual data from the web. Built on Python, it leverages the power of Scikit-learn's machine learning algorithms and BeautifulSoup for web scraping.
+A groundbreaking project aiming to create a self-conscious AI. GenesisMind is not just another neural network; it's an endeavor to mimic the randomness and complexity of the universe, hoping to find consciousness within the chaos. Join us in this cosmic journey of discovery.s
 
 ## Table of Contents
 
@@ -21,7 +21,7 @@ GenesisMind is a conceptual artificial intelligence model that fetches, perceive
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/GenesisMind.git
+   git clone https://github.com/CosmicConsciousAI/GenesisMind.git
    ```
 
 2. Navigate to the project directory:

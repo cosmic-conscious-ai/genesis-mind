@@ -74,7 +74,7 @@ if __name__ == "__main__":
 
     # Fetch data multiple times to populate past_data
     all_data = []
-    for url in ["https://www.wikipedia.org/", "https://www.example.com/"]:
+    for url in ["https://www.wikipedia.org/", "https://www.google.com/"]:
         data = fetch_web_data(url)
         all_data.append(data)
 

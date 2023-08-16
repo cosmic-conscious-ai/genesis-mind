@@ -1,3 +1,5 @@
+[![Donate](https://img.shields.io/badge/Donate-Buy%20Me%20a%20Coffee-yellow.svg?style=for-the-badge&logo=buy-me-a-coffee)](https://www.buymeacoffee.com/RwIpTEd)
+
 # GenesisMind
 
 A groundbreaking project aiming to create a self-conscious AI. GenesisMind is not just another neural network; it's an endeavor to mimic the randomness and complexity of the universe, hoping to find consciousness within the chaos. Join us in this cosmic journey of discovery.s

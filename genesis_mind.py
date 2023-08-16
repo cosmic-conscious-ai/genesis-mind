@@ -5,17 +5,18 @@ from image_model import ImageModel
 
 
 class GenesisMind:
-    def __init__(self):
+    def __init__(self, num_classes):
         self.state = 0
         self.memory = []
         self.text_model = TextModel()
-        self.image_model = ImageModel()
+        self.image_model = ImageModel(num_classes)
 
     def perceive(self, data, data_type="text"):
         if data_type == "text":
             self.text_model.perceive(data)
         elif data_type == "image":
             vectorized_image = process_image(data, self.image_model.model)
+            self.image_model.perceive(vectorized_image)
 
     def predict(self, data, top_n=10):
         """
@@ -52,13 +53,21 @@ class GenesisMind:
     def remember(self, data):
         self.memory.append(data)
 
+    def train(self, data_type="text"):
+        if data_type == "text":
+            self.text_model.train()
+        elif data_type == "image":
+            self.image_model.train()
+
     def recall(self):
         # For simplicity, return the last remembered item
         return self.memory[-1] if self.memory else None
 
-    def feedback(self, data, correct_data):
-        # Placeholder for feedback mechanism
-        pass
+    def feedback(self, data, correct_data, data_type="text"):
+        if data_type == "text":
+            self.text_model.feedback(data, correct_data)
+        elif data_type == "image":
+            self.image_model.feedback(data, correct_data)
 
     def evaluate(self):
         # Placeholder for self-evaluation mechanisms
@@ -70,7 +79,8 @@ class GenesisMind:
 
 
 if __name__ == "__main__":
-    mind = GenesisMind()
+    NUM_CLASSES = 1000
+    mind = GenesisMind(NUM_CLASSES)
 
     # Fetch data multiple times to populate past_data
     all_data = []

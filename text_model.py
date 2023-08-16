@@ -52,3 +52,24 @@ class TextModel:
         """
         vectorized_data = self.vectorizer.transform([data]).toarray()
         self.past_data.append(vectorized_data[0])
+
+    def feedback(self, data, correct_data):
+        """
+        Adjust the model's past data based on feedback.
+
+        Parameters:
+        - data: The original data that was perceived.
+        - correct_data: The correct data provided as feedback.
+        """
+        # Vectorize the original and correct data
+        vectorized_data = self.vectorizer.transform([data]).toarray()[0]
+        vectorized_correct_data = self.vectorizer.transform(
+            [correct_data]).toarray()[0]
+
+        # Find the index of the original data in past_data
+        data_index = next((i for i, past_datum in enumerate(
+            self.past_data) if np.array_equal(past_datum, vectorized_data)), None)
+
+        # If the original data is found in past_data, replace it with the correct data
+        if data_index is not None:
+            self.past_data[data_index] = vectorized_correct_data

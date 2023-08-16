@@ -5,11 +5,14 @@ from image_model import ImageModel
 
 
 class GenesisMind:
+    THRESHOLD = 0.5
+
     def __init__(self, num_classes):
         self.state = 0
         self.memory = []
         self.text_model = TextModel()
         self.image_model = ImageModel(num_classes)
+        self.evaluation_history = []
 
     def perceive(self, data, data_type="text"):
         if data_type == "text":
@@ -43,8 +46,14 @@ class GenesisMind:
         plt.show()
 
     def think(self):
-        # For now, let's just square the state value
-        self.state = self.state ** 2
+        """
+        Analyze the perceived data, make connections between different pieces of data, 
+        and update the state based on this analysis.
+        """
+        # For simplicity, let's say the AI thinks by averaging the values of the perceived data
+        if self.memory:
+            average_value = sum(self.memory) / len(self.memory)
+            self.state = average_value
 
     def act(self):
         # For now, let's just return the state value
@@ -69,13 +78,53 @@ class GenesisMind:
         elif data_type == "image":
             self.image_model.feedback(data, correct_data)
 
-    def evaluate(self):
-        # Placeholder for self-evaluation mechanisms
-        return "Evaluation result"
+    def evaluate(self, predicted_data, actual_data):
+        """
+        Assess the accuracy of the predictions made by the AI.
+        """
+        # Vectorize the text data
+        vectorized_predicted = self.text_model.vectorize(predicted_data)
+        vectorized_actual = self.text_model.vectorize(actual_data)
 
-    def adapt(self):
-        # Placeholder for adaptation mechanisms
-        pass
+        # Compute the Mean Absolute Error (MAE) on the vectorized data
+        mae = sum(abs(vectorized_predicted[i] - vectorized_actual[i])
+                  for i in range(len(vectorized_predicted))) / len(vectorized_predicted)
+        return mae
+
+    def recursive_learn(self, data):
+        """
+        Learn recursively by perceiving the data, making predictions, evaluating performance, 
+        and retraining if necessary.
+        """
+        if data is None:
+            print("Warning: Received None data. Skipping this iteration.")
+            return
+
+        self.perceive(data)
+        prediction = self.predict(data)
+        eval_score = self.evaluate(data, prediction)
+        self.evaluation_history.append(eval_score)
+
+        if eval_score > self.THRESHOLD:
+            self.train()
+
+    def plot_training_curve(self):
+        """
+        Plot the training curve based on the evaluation history.
+        """
+        plt.plot(self.evaluation_history)
+        plt.xlabel('Iterations')
+        plt.ylabel('Evaluation Score')
+        plt.title('Training Curve')
+        plt.show()
+
+    def adapt(self, evaluation_score):
+        """
+        Adapt the AI's models based on the evaluation score.
+        """
+        # If the evaluation score is above a certain threshold, retrain the models
+        if evaluation_score > self.THRESHOLD:
+            self.train()
 
 
 if __name__ == "__main__":
@@ -91,14 +140,18 @@ if __name__ == "__main__":
     # Fit the vectorizer to all the data
     mind.text_model.fit_vectorizer(all_data)
 
-    # Perceive and think on each data
+    # Use recursive learning for each data
     for data in all_data:
-        mind.perceive(data)
-        mind.think()
+        mind.recursive_learn(data)
 
-    # Train the text model after perceiving multiple data sources
-    mind.text_model.train()
+    # Plot the training curve to visualize the AI's performance over time
+    mind.plot_training_curve()
 
     # Predict using the last data
     prediction = mind.predict(all_data[-1])
     print(f"GenesisMind's prediction for the next state: {prediction}")
+
+    # For demonstration purposes, let's evaluate and adapt using the last two data points
+    eval_score = mind.evaluate(all_data[-2], all_data[-1])
+    print(f"Evaluation Score: {eval_score}")
+    mind.adapt(eval_score)

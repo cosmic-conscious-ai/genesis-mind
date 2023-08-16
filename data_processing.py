@@ -6,9 +6,22 @@ from keras.applications.vgg16 import preprocess_input
 
 
 def fetch_web_data(url):
-    response = requests.get(url)
-    soup = BeautifulSoup(response.content, 'html.parser')
-    return soup.text
+    try:
+        response = requests.get(url)
+        # This will raise an HTTPError if the HTTP request returned an unsuccessful status code
+        response.raise_for_status()
+
+        soup = BeautifulSoup(response.content, 'html.parser')
+        text_content = soup.text
+
+        if not text_content or text_content.isspace():
+            print(f"Warning: No or minimal textual content fetched from {url}")
+            return ""
+
+        return text_content
+    except requests.RequestException as e:
+        print(f"Error fetching data from {url}. Error: {e}")
+        return ""
 
 
 def process_image(img_path, image_model):

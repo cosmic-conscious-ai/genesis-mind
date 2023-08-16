@@ -16,9 +16,10 @@ class TextModel:
         self.vectorizer.fit(data)
 
     def vectorize(self, data):
-        """
-        Convert text data into its vector representation using TF-IDF.
-        """
+        if data is None:
+            print("Warning: Trying to vectorize None data. Returning empty vector.")
+            return [0] * len(self.vectorizer.get_feature_names_out())
+
         return self.vectorizer.transform([data]).toarray()[0]
 
     def train(self):

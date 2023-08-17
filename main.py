@@ -8,7 +8,7 @@ def main(logger):
 
     # Start with a generic search term to fetch initial data
     initial_data = mind.explorer.autonomous_explore(
-        "https://www.bing.com/search?q=Artificial+Intelligence", max_iterations=1)
+        "https://www.bing.com/search?q=Artificial+Intelligence")
 
     if not initial_data:
         logger.error("No initial data fetched. Exiting.")
@@ -51,7 +51,7 @@ def main(logger):
 
     # Autonomous exploration and learning
     logger.info("Starting autonomous exploration...")
-    mind.explorer.continuous_learning(max_iterations=5)
+    mind.explorer.continuous_learning()
 
     # Plot the training curve to visualize the AI's performance over time
     mind.plot_training_curve()

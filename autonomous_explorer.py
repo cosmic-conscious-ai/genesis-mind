@@ -34,7 +34,7 @@ class AutonomousExplorer:
             self.logger.error(f"Error discovering links: {e}")
             return []
 
-    def autonomous_explore(self, search_url: str, max_iterations: int = 10):
+    def autonomous_explore(self, search_url: str):
         """
         Start with a search URL and explore the web autonomously.
         """
@@ -46,32 +46,36 @@ class AutonomousExplorer:
 
         try:
             current_url = search_url
-            for _ in range(max_iterations):
-                if current_url in self.visited_urls:
-                    self.logger.info(
-                        f"URL {current_url} already visited. Evolving search query.")
-                    current_url = self.evolve_search_query()
-                    continue
 
-                content = self.data_processor.fetch_web_data(current_url)
-                if content:
-                    # Assuming all fetched data is of type "text" for now
-                    fetched_data.append({"data": content, "data_type": "text"})
-                    self.genesis_mind.recursive_learn(content)
-                    self.visited_urls.add(current_url)
-                    links = self.discover_links(content)
-                    current_url = random.choice(
-                        [link for link in links if link not in self.visited_urls]) if links else self.evolve_search_query()
-                else:
-                    self.logger.error(
-                        f"Failed to fetch content from {current_url}. Trying a different search term.")
-                    current_url = self.evolve_search_query()
+            if current_url in self.visited_urls:
+                self.logger.info(
+                    f"URL {current_url} already visited. Evolving search query.")
+                current_url = self.evolve_search_query()
+
+            content = self.data_processor.fetch_web_data(current_url)
+            soup = BeautifulSoup(content, 'html.parser')
+            text_content = soup.get_text(separator=' ', strip=True)
+            if content:
+                # Assuming all fetched data is of type "text" for now
+                fetched_data.append(
+                    {"data": text_content, "data_type": "text"})
+                self.genesis_mind.recursive_learn(content)
+                self.visited_urls.add(current_url)
+                links = self.discover_links(content)
+                current_url = random.choice(
+                    [link for link in links if link not in self.visited_urls]) if links else self.evolve_search_query()
+            else:
+                self.logger.error(
+                    f"Failed to fetch content from {current_url}. Trying a different search term.")
+                current_url = self.evolve_search_query()
         except Exception as e:
             self.logger.error(f"Error during autonomous exploration: {e}")
             return []
 
         # Return the fetched data
         return fetched_data
+
+    import random
 
     def evolve_search_query(self):
         """
@@ -83,7 +87,10 @@ class AutonomousExplorer:
             "Machine Learning Techniques",
             "Neural Networks Basics"
         ]
-        evolved_query = f"https://www.bing.com/search?q={random.choice(introspective_queries)}"
+
+        # Default to introspective query
+        default_query = random.choice(introspective_queries)
+        evolved_query = f"https://www.bing.com/search?q={default_query.replace(' ', '+')}"
 
         try:
             last_memory = self.genesis_mind.recall()
@@ -103,26 +110,26 @@ class AutonomousExplorer:
                     "Model prediction is None. Reverting to introspection.")
                 return evolved_query
 
-            self.logger.info(f"Evolved search query to: {last_prediction}")
+            # Convert the list of predicted terms to a search query string
+            search_query_string = '+'.join(last_prediction)
+            evolved_query = f"https://www.bing.com/search?q={search_query_string}"
 
-            evolved_query = f"https://www.bing.com/search?q={last_prediction}"
-            if not evolved_query:
-                self.logger.error(
-                    "Failed to evolve search query. Reverting to introspection.")
-                return evolved_query
+            self.logger.info(f"Evolved search query to: {search_query_string}")
+
         except Exception as e:
             self.logger.error(f"Error evolving search query: {e}")
             return evolved_query
 
         return evolved_query
 
-    def continuous_learning(self, max_iterations: int = 10):
+    def continuous_learning(self):
         """
         Continuously explore, learn, and adapt.
         """
         try:
-            self.logger.info("Starting continuous learning process.")
-            search_url = self.evolve_search_query()
-            self.autonomous_explore(search_url, max_iterations)
+            while not self.genesis_mind.is_conscious():
+                self.logger.info("Starting continuous learning process.")
+                search_url = self.evolve_search_query()
+                self.autonomous_explore(search_url)
         except Exception as e:
             self.logger.error(f"Error during continuous learning: {e}")

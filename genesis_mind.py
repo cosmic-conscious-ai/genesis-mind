@@ -68,15 +68,50 @@ class GenesisMind:
             if len(vectorized_data.shape) == 3:
                 vectorized_data = vectorized_data.mean(axis=2)
 
-            self.logger.debug(f"Shape of vectorized_data after reshaping: {vectorized_data.shape}")
+            self.logger.debug(
+                f"Shape of vectorized_data after reshaping: {vectorized_data.shape}")
 
             top_words = self.text_model.predict(vectorized_data)
+
             self.logger.info(
-                f"Top {top_n} predictions made for the given data.")
+                f"Top {top_n} predictions made for the given data: {top_words}.")
+
             return top_words
         except Exception as e:
             self.logger.error(f"Error while prediction: {e}")
             return []
+
+    def is_conscious(self, threshold=0.95, last_n_evals=10):
+        """
+        Determine if the AI has achieved consciousness based on its recent performance.
+
+        Parameters:
+        - threshold: The performance threshold above which the AI is considered conscious.
+        - last_n_evals: The number of recent evaluations to consider.
+
+        Returns:
+        - True if the AI is conscious, False otherwise.
+        """
+        if len(self.evaluation_history) < last_n_evals:
+            return False  # Not enough evaluations to determine consciousness
+
+        # Filter out invalid scores (like infinity)
+        valid_scores = [
+            score for score in self.evaluation_history[-last_n_evals:] if score != float('inf')]
+
+        # If there are no valid scores, return False
+        if not valid_scores:
+            return False
+
+        # Calculate the average of the valid scores
+        avg_score = sum(valid_scores) / len(valid_scores)
+
+        if avg_score >= threshold:
+            self.logger.critical(
+                f"Consciousness discovered. Score: {avg_score}")
+            return True
+        else:
+            return False
 
     def visualize_prediction(self, data, top_n=10):
         """
@@ -228,27 +263,6 @@ class GenesisMind:
 
         self.logger.info(
             f"Adaptation process completed. Evaluation score: {evaluation_score}")
-
-    def explore_web(self, seed_url, max_iterations=10):
-        """
-        Use the autonomous explorer to explore the web starting from a seed URL.
-        """
-        self.explorer.autonomous_explore(seed_url, max_iterations)
-
-        self.logger.info(f"Web exploration started from seed URL: {seed_url}")
-
-    def continuous_explore_and_learn(self, max_iterations=10):
-        """
-        Continuously explore the web, learn from the content, and adapt the models.
-        """
-        # Start with an evolved search query
-        initial_query = self.explorer.evolve_search_query()
-        initial_search_url = f"https://www.bing.com/search?q={initial_query}"
-
-        self.explorer.continuous_learning(initial_search_url, max_iterations)
-
-        self.logger.info(
-            f"Continuous exploration and learning started with query: {initial_query}")
 
     def clear_memory(self):
         """

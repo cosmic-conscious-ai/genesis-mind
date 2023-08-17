@@ -53,32 +53,30 @@ class GenesisMind:
         """
         Predict the next state based on the current state and return the top n words.
         """
-        vectorized_data = self.text_model.vectorize(data)
-        if vectorized_data is None:
-            return None
+        try:
+            vectorized_data = self.text_model.vectorize(data)
 
-        if not self.text_model.is_trained:
-            self.logger.warning(
-                "Model hasn't been trained yet. Cannot make predictions.")
-            return None
+            if vectorized_data is None:
+                return None
 
-        if not hasattr(self.text_model, 'coef_'):
-            self.logger.warning(
-                "Model hasn't been trained yet. Cannot make predictions.")
-            return None
+            if not self.text_model.is_trained:
+                self.logger.warning(
+                    "Model hasn't been trained yet. Cannot make predictions.")
+                return None
 
-        # Reshape the data if it has 3 dimensions
-        if len(vectorized_data.shape) == 3:
-            num_samples, num_features, _ = vectorized_data.shape
-            vectorized_data = vectorized_data.reshape(
-                num_samples, num_features)
+            # Reshape the data if it has 3 dimensions
+            if len(vectorized_data.shape) == 3:
+                vectorized_data = vectorized_data.mean(axis=2)
 
-        prediction = self.text_model.predict([vectorized_data])
-        top_indices = prediction[0].argsort()[-top_n:][::-1]
-        top_words = [self.text_model.vectorizer.get_feature_names_out()[i]
-                     for i in top_indices]
-        self.logger.info(f"Top {top_n} predictions made for the given data.")
-        return top_words
+            self.logger.debug(f"Shape of vectorized_data after reshaping: {vectorized_data.shape}")
+
+            top_words = self.text_model.predict(vectorized_data)
+            self.logger.info(
+                f"Top {top_n} predictions made for the given data.")
+            return top_words
+        except Exception as e:
+            self.logger.error(f"Error while prediction: {e}")
+            return []
 
     def visualize_prediction(self, data, top_n=10):
         """
@@ -131,10 +129,8 @@ class GenesisMind:
         try:
             if data_type == "text":
                 self.text_model.train()
-                self.logger.info("Text model trained.")
             elif data_type == "image":
                 self.image_model.train()
-                self.logger.info("Image model trained.")
         except Exception as e:
             self.logger.error(f"Error training model: {e}")
 

@@ -4,6 +4,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.exceptions import NotFittedError
 import logging
 from sklearn.metrics.pairwise import cosine_similarity
+import traceback
 
 
 class TextModel:
@@ -27,13 +28,47 @@ class TextModel:
 
     def vectorize(self, data):
         try:
+            self.logger.debug(f"Initial data type: {type(data)}")
+            self.logger.debug(f"Initial data content: {data}")
+
+            # Check if data is a list containing a numpy array
+            if isinstance(data, list) and len(data) == 1 and isinstance(data[0], np.ndarray):
+                data = [str(item) for item in data[0].flatten()]
+                self.logger.debug(
+                    f"Data after list containing numpy array handling: {data}")
+
+            elif isinstance(data, np.ndarray):
+                data = [str(item) for item in data.flatten()]
+                self.logger.debug(f"Data after numpy array handling: {data}")
+
             if isinstance(data, str):
                 data = [data]
+                self.logger.debug(f"Data after string handling: {data}")
 
-            if not data or all(not item.strip() for item in data):
+            self.logger.debug(f"Data type: {type(data)}")
+            self.logger.debug(f"Data content: {data}")
+
+            if any(isinstance(item, (list, tuple, set)) for item in data):
                 self.logger.warning(
-                    "Trying to vectorize empty or None data. Returning None.")
+                    "Data contains nested lists or other iterables.")
+
+            if any(item is None for item in data):
+                self.logger.warning("Data contains None values.")
+
+            if not data:
+                self.logger.warning("Data is empty. Returning None.")
                 return None
+
+            if not all(isinstance(item, str) for item in data):
+                self.logger.warning(
+                    "All items in data are not strings. Returning None.")
+                return None
+
+            if all(not item.strip() for item in data):
+                self.logger.warning(
+                    "All strings in data are empty. Returning None.")
+                return None
+
             if not self.is_vectorizer_fitted():
                 self.logger.warning(
                     "Vectorizer is not fitted. Cannot vectorize data.")
@@ -41,7 +76,8 @@ class TextModel:
 
             return self.vectorizer.transform(data).toarray()
         except Exception as e:
-            self.logger.error(f"Error during vectorization: {e}")
+            self.logger.error(
+                f"Error during vectorization: {e}\n{traceback.format_exc()}")
             return None
 
     def train(self):
@@ -66,24 +102,14 @@ class TextModel:
         except Exception as e:
             self.logger.error(f"Error during model training: {e}")
 
-    def predict(self, data, top_n=10):
+    def predict(self, vectorized_data, top_n=10):
         """
         Predict the next state based on the current state and return the top n words.
         """
-        vectorized_data = self.vectorize(data)
-        if vectorized_data is None:
-            return None
-
-        if not hasattr(self.model, 'coef_'):
-            self.logger.warning(
-                "Model hasn't been trained yet. Cannot make predictions.")
-            return None
-
-        prediction = self.model.predict([vectorized_data])
+        prediction = self.model.predict(vectorized_data)
         top_indices = prediction[0].argsort()[-top_n:][::-1]
         top_words = [self.vectorizer.get_feature_names_out()[i]
                      for i in top_indices]
-        self.logger.info(f"Top {top_n} predictions made for the given data.")
         return top_words
 
     def is_vectorizer_fitted(self):

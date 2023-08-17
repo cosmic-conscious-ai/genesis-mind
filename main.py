@@ -19,17 +19,13 @@ def main(logger):
                  for item in initial_data if item["data_type"] == "text"]
     if text_data:
         mind.text_model.fit_vectorizer(text_data)
-        logger.info("Vectorizer fitted to all text data.")
         mind.text_model.train()
-        logger.info("Text model trained.")
 
     # Now, perceive each data point and use recursive learning
     for data_item in initial_data:
         mind.perceive(data_item["data"], data_item["data_type"])
-        logger.info(f"Perceived {data_item['data_type']} data.")
         mind.recursive_learn(data_item["data"], data_item["data_type"])
-        logger.info(
-            f"Recursive learning completed for current {data_item['data_type']} data.")
+        mind.train(data_item["data_type"])
 
     if not mind.recall():
         logger.error(

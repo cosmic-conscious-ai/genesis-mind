@@ -8,7 +8,7 @@ def main(logger):
 
     # Start with a generic search term to fetch initial data
     initial_data = mind.explorer.autonomous_explore(
-        "https://www.google.com/search?q=Artificial+Intelligence", max_iterations=1)
+        "https://www.bing.com/search?q=Artificial+Intelligence", max_iterations=1)
 
     if not initial_data:
         logger.error("No initial data fetched. Exiting.")

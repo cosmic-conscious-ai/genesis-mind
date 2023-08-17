@@ -242,7 +242,7 @@ class GenesisMind:
         """
         # Start with an evolved search query
         initial_query = self.explorer.evolve_search_query()
-        initial_search_url = f"https://www.google.com/search?q={initial_query}"
+        initial_search_url = f"https://www.bing.com/search?q={initial_query}"
 
         self.explorer.continuous_learning(initial_search_url, max_iterations)
 

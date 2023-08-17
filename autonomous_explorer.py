@@ -24,8 +24,10 @@ class AutonomousExplorer:
                 return []
 
             soup = BeautifulSoup(content, 'html.parser')
-            links = [a['href'] for a in soup.find_all(
-                'a', href=True) if a['href'] and not re.search(r'(^#|javascript:|mailto:)', a['href'])]
+            links = [a['href'] for a in soup.find_all('a', href=True)
+                     if a['href'] and not re.search(r'(^#|javascript:|mailto:)', a['href'])
+                     and a['href'].startswith(('http://', 'https://'))]  # Check if the link starts with http:// or https://
+
             self.logger.debug(f"Discovered {len(links)} links from content.")
             return links
         except Exception as e:
@@ -81,7 +83,7 @@ class AutonomousExplorer:
             "Machine Learning Techniques",
             "Neural Networks Basics"
         ]
-        evolved_query = f"https://www.google.com/search?q={random.choice(introspective_queries)}"
+        evolved_query = f"https://www.bing.com/search?q={random.choice(introspective_queries)}"
 
         try:
             last_memory = self.genesis_mind.recall()
@@ -103,7 +105,7 @@ class AutonomousExplorer:
 
             self.logger.info(f"Evolved search query to: {last_prediction}")
 
-            evolved_query = f"https://www.google.com/search?q={last_prediction}"
+            evolved_query = f"https://www.bing.com/search?q={last_prediction}"
             if not evolved_query:
                 self.logger.error(
                     "Failed to evolve search query. Reverting to introspection.")

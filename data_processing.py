@@ -12,23 +12,26 @@ class DataProcessor:
 
     def fetch_web_data(self, url: str) -> str:
         """
-        Fetches web data from the given URL and returns its textual content.
+        Fetches web data from the given URL and returns its full HTML content.
         """
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+        }
+
         try:
-            response = requests.get(url)
+            response = requests.get(url, headers=headers, timeout=10)
             response.raise_for_status()
 
-            soup = BeautifulSoup(response.content, 'html.parser')
-            text_content = soup.text
+            html_content = response.text  # Get the full HTML content
 
-            if not text_content or text_content.isspace():
+            if not html_content or html_content.isspace():
                 self.logger.warning(
-                    f"No or minimal textual content fetched from {url}")
+                    f"No or minimal content fetched from {url}")
                 return ""
 
             self.logger.info(f"Successfully fetched data from {url}")
-            return text_content
-        except requests.RequestException as e:
+            return html_content
+        except (requests.RequestException, Exception) as e:
             self.logger.error(f"Error fetching data from {url}. Error: {e}")
             return ""
 

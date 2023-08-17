@@ -3,10 +3,12 @@ from data_processing import DataProcessor
 from text_model import TextModel
 from image_model import ImageModel
 from autonomous_explorer import AutonomousExplorer
-from logger import logger
 from collections import namedtuple
 import os
 import logging
+import pickle
+import joblib
+
 
 MemoryItem = namedtuple('MemoryItem', ['data', 'data_type'])
 
@@ -18,13 +20,17 @@ class GenesisMind:
     def __init__(self, num_classes):
         self.state = 0
         self.memory = []
+        self.evaluation_history = []
         self.data_processor = DataProcessor()
         self.text_model = TextModel()
         self.image_model = ImageModel(num_classes)
-        self.evaluation_history = []
-        # Initialize the autonomous explorer
         self.explorer = AutonomousExplorer(self)
         self.logger = logging.getLogger(self.__class__.__name__)
+
+    def is_state_loaded(self):
+        model_exists = os.path.exists(os.path.join("models", "text_model.h5")) and \
+            os.path.exists(os.path.join("models", "image_model.h5"))
+        return model_exists and len(self.evaluation_history) > 0
 
     def perceive(self, data, data_type="text"):
         try:
@@ -278,8 +284,14 @@ class GenesisMind:
         try:
             if not os.path.exists(path):
                 os.makedirs(path)
-            self.text_model.model.save(os.path.join(path, "text_model.h5"))
+
+            # Assuming text_model uses scikit-learn's LinearRegression
+            joblib.dump(self.text_model.model,
+                        os.path.join(path, "text_model.pkl"))
+
+            # If image_model is a Keras model
             self.image_model.model.save(os.path.join(path, "image_model.h5"))
+
             self.logger.info(f"Models saved to {path}.")
         except Exception as e:
             self.logger.error(f"Error saving models: {e}")
@@ -289,10 +301,56 @@ class GenesisMind:
         Load the models from disk.
         """
         try:
-            self.text_model.model.load_weights(
-                os.path.join(path, "text_model.h5"))
+            if not os.path.exists(path):
+                self.logger.warning(f"No saved model found at {path}.")
+                return
+
+            # Assuming text_model uses scikit-learn's LinearRegression
+            self.text_model.model = joblib.load(
+                os.path.join(path, "text_model.pkl"))
+
+            # If image_model is a Keras model
             self.image_model.model.load_weights(
                 os.path.join(path, "image_model.h5"))
+
             self.logger.info(f"Models loaded from {path}.")
         except Exception as e:
             self.logger.error(f"Error loading models: {e}")
+
+    def save_state(self, path="models/state.pkl"):
+        """
+        Save the state of the GenesisMind to disk.
+        """
+        try:
+            if not os.path.exists(os.path.dirname(path)):
+                os.makedirs(os.path.dirname(path))
+
+            with open(path, 'wb') as f:
+                pickle.dump({
+                    'state': self.state,
+                    'memory': self.memory,
+                    'evaluation_history': self.evaluation_history
+                }, f)
+
+            self.logger.info(f"GenesisMind state saved to {path}.")
+        except Exception as e:
+            self.logger.error(f"Error saving GenesisMind state: {e}")
+
+    def load_state(self, path="models/state.pkl"):
+        """
+        Load the state of the GenesisMind from disk.
+        """
+        try:
+            if not os.path.exists(path):
+                self.logger.warning(f"No saved state found at {path}.")
+                return
+
+            with open(path, 'rb') as f:
+                saved_state = pickle.load(f)
+                self.state = saved_state['state']
+                self.memory = saved_state['memory']
+                self.evaluation_history = saved_state['evaluation_history']
+
+            self.logger.info(f"GenesisMind state loaded from {path}.")
+        except Exception as e:
+            self.logger.error(f"Error loading GenesisMind state: {e}")

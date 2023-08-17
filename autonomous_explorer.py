@@ -3,6 +3,8 @@ from data_processing import DataProcessor
 import random
 import re
 import logging
+import pickle
+import os
 
 
 class AutonomousExplorer:
@@ -12,8 +14,8 @@ class AutonomousExplorer:
 
     def __init__(self, genesis_mind):
         self.genesis_mind = genesis_mind
+        self.visited_urls = set()
         self.data_processor = DataProcessor()
-        self.visited_urls = set()  # Track visited URLs
         self.logger = logging.getLogger(self.__class__.__name__)
 
     def discover_links(self, content: str) -> list:
@@ -133,3 +135,37 @@ class AutonomousExplorer:
                 self.autonomous_explore(search_url)
         except Exception as e:
             self.logger.error(f"Error during continuous learning: {e}")
+
+    def save_state(self, path="models/explorer_state.pkl"):
+        """
+        Save the state of the AutonomousExplorer to disk.
+        """
+        try:
+            if not os.path.exists(os.path.dirname(path)):
+                os.makedirs(os.path.dirname(path))
+
+            with open(path, 'wb') as f:
+                pickle.dump({
+                    'visited_urls': self.visited_urls
+                }, f)
+
+            self.logger.info(f"AutonomousExplorer state saved to {path}.")
+        except Exception as e:
+            self.logger.error(f"Error saving AutonomousExplorer state: {e}")
+
+    def load_state(self, path="models/explorer_state.pkl"):
+        """
+        Load the state of the AutonomousExplorer from disk.
+        """
+        try:
+            if not os.path.exists(path):
+                self.logger.warning(f"No saved state found at {path}.")
+                return
+
+            with open(path, 'rb') as f:
+                saved_state = pickle.load(f)
+                self.visited_urls = saved_state['visited_urls']
+
+            self.logger.info(f"AutonomousExplorer state loaded from {path}.")
+        except Exception as e:
+            self.logger.error(f"Error loading AutonomousExplorer state: {e}")

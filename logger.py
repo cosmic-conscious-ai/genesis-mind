@@ -22,7 +22,3 @@ def setup_logger(log_file=None):
 
     logger = logging.getLogger()
     return logger
-
-
-# Initialize the logger
-logger = setup_logger()

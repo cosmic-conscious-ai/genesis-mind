@@ -57,6 +57,11 @@ class GenesisMind:
         if vectorized_data is None:
             return None
 
+        if not self.text_model.is_trained:
+            self.logger.warning(
+                "Model hasn't been trained yet. Cannot make predictions.")
+            return None
+
         if not hasattr(self.text_model, 'coef_'):
             self.logger.warning(
                 "Model hasn't been trained yet. Cannot make predictions.")
@@ -98,7 +103,7 @@ class GenesisMind:
 
     def think(self):
         """
-        Analyze the perceived data, make connections between different pieces of data, 
+        Analyze the perceived data, make connections between different pieces of data,
         and update the state based on this analysis.
         """
         try:
@@ -163,13 +168,12 @@ class GenesisMind:
                 if vectorized_predicted is None or vectorized_actual is None:
                     self.logger.error(
                         "Failed to vectorize the data for evaluation.")
-                    # Return a large error value or handle appropriately
                     return float('inf')
 
-                # Compute the Mean Absolute Error (MAE) on the vectorized data
-                mae = sum(abs(vectorized_predicted[i] - vectorized_actual[i])
-                          for i in range(len(vectorized_predicted))) / len(vectorized_predicted)
-                return mae
+                # Compute the cosine similarity or another suitable metric
+                similarity = self.text_model.compute_similarity(
+                    vectorized_predicted, vectorized_actual)
+                return 1 - similarity  # Return a dissimilarity score
 
             elif data_type == "image":
                 # For image data, you can use a different evaluation metric (e.g., accuracy, F1-score)
@@ -196,11 +200,12 @@ class GenesisMind:
 
         self.perceive(data, data_type)
         prediction = self.predict(data)
-        eval_score = self.evaluate(data, prediction, data_type)
-        self.evaluation_history.append(eval_score)
+        if prediction:  # Only evaluate if there's a prediction
+            eval_score = self.evaluate(data, prediction, data_type)
+            self.evaluation_history.append(eval_score)
 
-        if eval_score > self.THRESHOLD:
-            self.train(data_type)
+            if eval_score > self.THRESHOLD:
+                self.train(data_type)
 
         # Log the first 50 characters of the data (if it's text)
         log_data = data[:50] if data_type == "text" else "[Image Data]"

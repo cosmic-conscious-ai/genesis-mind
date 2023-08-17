@@ -1,9 +1,9 @@
 import numpy as np
 from sklearn.linear_model import LinearRegression
 from sklearn.feature_extraction.text import TfidfVectorizer
-from logger import logger
 from sklearn.exceptions import NotFittedError
 import logging
+from sklearn.metrics.pairwise import cosine_similarity
 
 
 class TextModel:
@@ -11,6 +11,7 @@ class TextModel:
         self.model = LinearRegression()
         self.vectorizer = TfidfVectorizer()
         self.past_data = []
+        self.is_trained = False
         self.logger = logging.getLogger(self.__class__.__name__)
 
     def fit_vectorizer(self, data):
@@ -60,6 +61,7 @@ class TextModel:
                 y = y.reshape(num_samples, num_features)
 
             self.model.fit(X, y)
+            self.is_trained = True  # Update the attribute after training
             self.logger.info("Model trained using past data.")
         except Exception as e:
             self.logger.error(f"Error during model training: {e}")
@@ -127,3 +129,14 @@ class TextModel:
         if data_index is not None:
             self.past_data[data_index] = vectorized_correct_data
             self.logger.info("Feedback received and past data adjusted.")
+
+    def compute_similarity(self, vectorized_data1, vectorized_data2):
+        """
+        Compute the cosine similarity between two vectorized texts.
+        """
+        try:
+            similarity = cosine_similarity(vectorized_data1, vectorized_data2)
+            return similarity[0][0]
+        except Exception as e:
+            self.logger.error(f"Error computing similarity: {e}")
+            return 0

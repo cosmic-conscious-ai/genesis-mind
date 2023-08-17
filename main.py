@@ -18,10 +18,10 @@ def main(logger):
     text_data = [item["data"]
                  for item in initial_data if item["data_type"] == "text"]
     if text_data:
-        mind.text_model.train()
-        logger.info("Text model trained.")
         mind.text_model.fit_vectorizer(text_data)
         logger.info("Vectorizer fitted to all text data.")
+        mind.text_model.train()
+        logger.info("Text model trained.")
 
     # Now, perceive each data point and use recursive learning
     for data_item in initial_data:

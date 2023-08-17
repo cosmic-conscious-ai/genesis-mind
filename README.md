@@ -2,13 +2,14 @@
 
 # GenesisMind
 
-A groundbreaking project aiming to create a self-conscious AI. GenesisMind is not just another neural network; it's an endeavor to mimic the randomness and complexity of the universe, hoping to find consciousness within the chaos. Join us in this cosmic journey of discovery.s
+A groundbreaking project aiming to create a self-conscious AI. GenesisMind is not just another neural network; it's an endeavor to mimic the randomness and complexity of the universe, hoping to find consciousness within the chaos. Join us in this cosmic journey of discovery.
 
 ## Table of Contents
 
 - [Features](#features)
 - [Installation](#installation)
 - [Usage](#usage)
+- [Logging](#logging)
 - [Contribute](#contribute)
 - [License](#license)
 
@@ -18,20 +19,25 @@ A groundbreaking project aiming to create a self-conscious AI. GenesisMind is no
 - **Text Perception**: Converts textual data into a numerical representation using TF-IDF vectorization.
 - **Learning & Prediction**: Uses a linear regression model to learn from perceived data and make predictions on future data.
 - **Visualization**: Visualizes predicted TF-IDF scores for top words using `matplotlib`.
+- **Autonomous Explorer**: A module that enables the AI to autonomously explore the web, learn, and adapt based on its interests and predictions.
+- **Logging**: Comprehensive logging mechanism to track the AI's activities, learning, and progress.
 
 ## Installation
 
 1. Clone the repository:
+
    ```bash
    git clone https://github.com/CosmicConsciousAI/GenesisMind.git
    ```
 
 2. Navigate to the project directory:
+
    ```bash
    cd GenesisMind
    ```
 
 3. Create a virtual environment and activate it:
+
    ```bash
    python -m venv genesis_env
    source genesis_env/bin/activate  # On Windows, use `genesis_env\Scripts\activate`
@@ -45,9 +51,14 @@ A groundbreaking project aiming to create a self-conscious AI. GenesisMind is no
 ## Usage
 
 Run the main script:
+
 ```bash
-python genesis_mind.py
+python main.py
 ```
+
+## Logging
+
+Logs are stored in the `logs` directory with a timestamp in the filename to ensure uniqueness. This allows for tracking the AI's activities, learning, and progress over multiple runs.
 
 ## Contribute
 

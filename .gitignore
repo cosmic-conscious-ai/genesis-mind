@@ -3,3 +3,5 @@ genesis_env
 __pycache__
 
 *.py[cod]
+
+logs

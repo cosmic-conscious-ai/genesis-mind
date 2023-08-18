@@ -77,8 +77,6 @@ class AutonomousExplorer:
         # Return the fetched data
         return fetched_data
 
-    import random
-
     def evolve_search_query(self):
         """
         Evolve the search query based on the AI's interests, predictions, and introspection.

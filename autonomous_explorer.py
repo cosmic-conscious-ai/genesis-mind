@@ -49,27 +49,31 @@ class AutonomousExplorer:
         try:
             current_url = search_url
 
-            if current_url in self.visited_urls:
-                self.logger.info(
-                    f"URL {current_url} already visited. Evolving search query.")
-                current_url = self.evolve_search_query()
+            while current_url and current_url not in self.visited_urls:
+                content = self.data_processor.fetch_web_data(current_url)
+                soup = BeautifulSoup(content, 'html.parser')
+                text_content = soup.get_text(separator=' ', strip=True)
 
-            content = self.data_processor.fetch_web_data(current_url)
-            soup = BeautifulSoup(content, 'html.parser')
-            text_content = soup.get_text(separator=' ', strip=True)
-            if content:
-                # Assuming all fetched data is of type "text" for now
-                fetched_data.append(
-                    {"data": text_content, "data_type": "text"})
-                self.genesis_mind.recursive_learn(content)
-                self.visited_urls.add(current_url)
-                links = self.discover_links(content)
-                current_url = random.choice(
-                    [link for link in links if link not in self.visited_urls]) if links else self.evolve_search_query()
-            else:
-                self.logger.error(
-                    f"Failed to fetch content from {current_url}. Trying a different search term.")
-                current_url = self.evolve_search_query()
+                if content:
+                    # Assuming all fetched data is of type "text" for now
+                    fetched_data.append(
+                        {"data": text_content, "data_type": "text"})
+                    self.genesis_mind.recursive_learn(content)
+                    self.visited_urls.add(current_url)
+                    links = self.discover_links(content)
+
+                    # Instead of choosing a random link, we'll iterate over all links
+                    for link in links:
+                        if link not in self.visited_urls:
+                            current_url = link
+                            break
+                    else:
+                        # If all links are visited or no links are found, evolve the search query
+                        current_url = self.evolve_search_query()
+                else:
+                    self.logger.error(
+                        f"Failed to fetch content from {current_url}. Trying a different search term.")
+                    current_url = self.evolve_search_query()
         except Exception as e:
             self.logger.error(f"Error during autonomous exploration: {e}")
             return []

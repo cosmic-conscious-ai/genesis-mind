@@ -1,39 +1,56 @@
 import numpy as np
 import requests
-from bs4 import BeautifulSoup
 from keras.preprocessing import image
 from keras.applications.vgg16 import preprocess_input
 import logging
+import random
+import time
 
 
 class DataProcessor:
+    USER_AGENTS = [
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0",
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+        # Add more user agents as needed
+    ]
+
     def __init__(self):
         self.logger = logging.getLogger(self.__class__.__name__)
 
     def fetch_web_data(self, url: str) -> str:
-        """
-        Fetches web data from the given URL and returns its full HTML content.
-        """
         headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+            "User-Agent": random.choice(self.USER_AGENTS)
         }
 
-        try:
-            response = requests.get(url, headers=headers, timeout=10)
-            response.raise_for_status()
+        self.logger.info(f"Visiting url: {url}")
 
-            html_content = response.text  # Get the full HTML content
+        for _ in range(3):  # Retry up to 3 times
+            try:
+                response = requests.get(url, headers=headers, timeout=10)
+                response.raise_for_status()
 
-            if not html_content or html_content.isspace():
-                self.logger.warning(
-                    f"No or minimal content fetched from {url}")
-                return ""
+                html_content = response.text
 
-            self.logger.info(f"Successfully fetched data from {url}")
-            return html_content
-        except (requests.RequestException, Exception) as e:
-            self.logger.error(f"Error fetching data from {url}. Error: {e}")
-            return ""
+                if not html_content or html_content.isspace():
+                    self.logger.warning(
+                        f"No or minimal content fetched from {url}")
+                    return ""
+
+                if "CAPTCHA" in html_content or "Are you a robot?" in html_content:
+                    self.logger.warning(
+                        f"Possible bot detection at {url}. Consider using a proxy or increasing delay.")
+                    return ""
+
+                self.logger.info(f"Successfully fetched data from {url}")
+                return html_content
+
+            except (requests.RequestException, Exception) as e:
+                self.logger.error(
+                    f"Error fetching data from {url} on attempt {_+1}. Error: {e}")
+                time.sleep(2**(_+1))  # Exponential backoff
+
+        return ""
 
     def process_image(self, img_path: str, image_model) -> np.ndarray:
         """

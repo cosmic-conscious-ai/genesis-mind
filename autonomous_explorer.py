@@ -30,13 +30,13 @@ class AutonomousExplorer:
                      if a['href'] and not re.search(r'(^#|javascript:|mailto:)', a['href'])
                      and a['href'].startswith(('http://', 'https://'))]  # Check if the link starts with http:// or https://
 
-            self.logger.debug(f"Discovered {len(links)} links from content.")
+            self.logger.info(f"Discovered {len(links)} links from content.")
             return links
         except Exception as e:
             self.logger.error(f"Error discovering links: {e}")
             return []
 
-    def autonomous_explore(self, search_url: str):
+    def autonomous_explore(self, search_url: str, endpoint: str):
         """
         Start with a search URL and explore the web autonomously.
         """
@@ -48,32 +48,54 @@ class AutonomousExplorer:
 
         try:
             current_url = search_url
+            link_queue = [current_url]
 
-            while current_url and current_url not in self.visited_urls:
-                content = self.data_processor.fetch_web_data(current_url)
-                soup = BeautifulSoup(content, 'html.parser')
-                text_content = soup.get_text(separator=' ', strip=True)
+            combined_text_content = ""  # Combine all texts here
+            MAX_TEXT_LENGTH = 250000  # Define a threshold for combined text length
 
-                if content:
-                    # Assuming all fetched data is of type "text" for now
-                    fetched_data.append(
-                        {"data": text_content, "data_type": "text"})
-                    self.genesis_mind.recursive_learn(content)
-                    self.visited_urls.add(current_url)
-                    links = self.discover_links(content)
+            while link_queue:
+                # Get the first link from the queue
+                current_url = link_queue.pop(0)
 
-                    # Instead of choosing a random link, we'll iterate over all links
-                    for link in links:
-                        if link not in self.visited_urls:
-                            current_url = link
-                            break
+                if current_url not in self.visited_urls:
+                    content = self.data_processor.fetch_web_data(current_url)
+                    soup = BeautifulSoup(content, 'html.parser')
+                    text_content = soup.get_text(separator=' ', strip=True)
+
+                    combined_text_content += text_content + " "  # Append to the combined text
+
+                    # If combined text exceeds a certain length, train the model and reset the text
+                    if len(combined_text_content) > MAX_TEXT_LENGTH:
+                        self.genesis_mind.recursive_learn(
+                            combined_text_content)
+                        fetched_data.append(
+                            {"data": combined_text_content, "data_type": "text"})
+                        self.logger.info(
+                            f"Releasing combined text with length: {len(combined_text_content)}")
+                        combined_text_content = ""  # Reset the combined text
+
+                    if content:
+                        self.visited_urls.add(current_url)
+                        links = self.discover_links(content)
+
+                        # Add discovered links to the queue
+                        for link in links:
+                            if link not in self.visited_urls and link not in link_queue:
+                                link_queue.append(link)
+
                     else:
-                        # If all links are visited or no links are found, evolve the search query
-                        current_url = self.evolve_search_query()
-                else:
-                    self.logger.error(
-                        f"Failed to fetch content from {current_url}. Trying a different search term.")
-                    current_url = self.evolve_search_query()
+                        self.logger.error(
+                            f"Failed to fetch content from {current_url}. Trying a different search term.")
+                        evolved_url = self.evolve_search_query(endpoint)
+                        if evolved_url:
+                            link_queue.append(evolved_url)
+
+            # If there's any remaining text after the loop, train the model with it
+            if combined_text_content:
+                self.genesis_mind.recursive_learn(combined_text_content)
+                fetched_data.append(
+                    {"data": combined_text_content, "data_type": "text"})
+
         except Exception as e:
             self.logger.error(f"Error during autonomous exploration: {e}")
             return []
@@ -81,7 +103,7 @@ class AutonomousExplorer:
         # Return the fetched data
         return fetched_data
 
-    def evolve_search_query(self):
+    def evolve_search_query(self, endpoint):
         """
         Evolve the search query based on the AI's interests, predictions, and introspection.
         """
@@ -94,7 +116,7 @@ class AutonomousExplorer:
 
         # Default to introspective query
         default_query = random.choice(introspective_queries)
-        evolved_query = f"https://www.bing.com/search?q={default_query.replace(' ', '+')}"
+        evolved_query = f"{endpoint}{default_query.replace(' ', '+')}"
 
         try:
             last_memory = self.genesis_mind.recall()
@@ -116,7 +138,7 @@ class AutonomousExplorer:
 
             # Convert the list of predicted terms to a search query string
             search_query_string = '+'.join(last_prediction)
-            evolved_query = f"https://www.bing.com/search?q={search_query_string}"
+            evolved_query = f"{endpoint}{search_query_string}"
 
             self.logger.info(f"Evolved search query to: {search_query_string}")
 
@@ -126,15 +148,15 @@ class AutonomousExplorer:
 
         return evolved_query
 
-    def continuous_learning(self):
+    def continuous_learning(self, endpoint):
         """
         Continuously explore, learn, and adapt.
         """
         try:
             while not self.genesis_mind.is_conscious():
                 self.logger.info("Starting continuous learning process.")
-                search_url = self.evolve_search_query()
-                self.autonomous_explore(search_url)
+                search_url = self.evolve_search_query(endpoint)
+                self.autonomous_explore(search_url, endpoint)
         except Exception as e:
             self.logger.error(f"Error during continuous learning: {e}")
 

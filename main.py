@@ -5,6 +5,7 @@ from logger import setup_logger
 
 
 def main(logger):
+    ENDPOINT = "https://www.duckduckgo.com/html?q="
     NUM_CLASSES = 1000
     mind = GenesisMind(NUM_CLASSES)
 
@@ -22,17 +23,19 @@ def main(logger):
         logger.info("This is the first run or no state has been saved yet.")
         # Start with a generic search term to fetch initial data
         initial_data = mind.explorer.autonomous_explore(
-            "https://www.bing.com/search?q=Artificial+Intelligence")
+            f"{ENDPOINT}Artificial+Intelligence", ENDPOINT)
 
         if not initial_data:
             logger.error("No initial data fetched. Exiting.")
             return
+            
+        # Combine all the fetched texts
+        combined_text = ' '.join([item["data"]
+                                  for item in initial_data if item["data_type"] == "text"])
 
-        # Train the model on the fetched data
-        text_data = [item["data"]
-                     for item in initial_data if item["data_type"] == "text"]
-        if text_data:
-            mind.text_model.fit_vectorizer(text_data)
+        # Train the model on the combined text
+        if combined_text:
+            mind.text_model.fit_vectorizer([combined_text])
             mind.text_model.train()
 
         # Now, perceive each data point and use recursive learning
@@ -46,8 +49,8 @@ def main(logger):
                 "GenesisMind's memory is empty. Please provide some initial data before starting autonomous exploration.")
             return
 
-        # Predict using the last data (assuming it's text for demonstration purposes)
-        prediction = mind.predict(initial_data[-1]["data"])
+        # Predict a new search term using the combined text
+        prediction = mind.predict(combined_text)
         if not prediction:
             logger.warning("Failed to make a prediction.")
             return
@@ -66,7 +69,7 @@ def main(logger):
 
     # Autonomous exploration and learning
     logger.info("Starting autonomous exploration...")
-    mind.explorer.continuous_learning()
+    mind.explorer.continuous_learning(ENDPOINT)
 
     # Plot the training curve to visualize the AI's performance over time
     mind.plot_training_curve()

@@ -102,11 +102,20 @@ class TextModel:
         except Exception as e:
             self.logger.error(f"Error during model training: {e}")
 
-    def predict(self, vectorized_data, top_n=10):
+    def predict(self, vectorized_data, top_n=10, epsilon=0.1):
         """
         Predict the next state based on the current state and return the top n words.
+        Using epsilon-greedy exploration to introduce randomness.
         """
         prediction = self.model.predict(vectorized_data)
+
+        # With probability epsilon, return a random word
+        if np.random.rand() < epsilon:
+            random_word = np.random.choice(
+                self.vectorizer.get_feature_names_out())
+            return [random_word]
+
+        # Otherwise, return the top n predicted words
         top_indices = prediction[0].argsort()[-top_n:][::-1]
         top_words = [self.vectorizer.get_feature_names_out()[i]
                      for i in top_indices]

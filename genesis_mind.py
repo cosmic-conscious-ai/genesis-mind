@@ -28,9 +28,7 @@ class GenesisMind:
         self.logger = logging.getLogger(self.__class__.__name__)
 
     def is_state_loaded(self):
-        model_exists = os.path.exists(os.path.join("models", "text_model.h5")) and \
-            os.path.exists(os.path.join("models", "image_model.h5"))
-        return model_exists and len(self.evaluation_history) > 0
+        return len(self.evaluation_history) > 0
 
     def perceive(self, data, data_type="text"):
         try:

@@ -15,6 +15,8 @@ class AutonomousExplorer:
     def __init__(self, genesis_mind):
         self.genesis_mind = genesis_mind
         self.visited_urls = set()
+        self.link_queue = []
+        self.combined_text_content = ""
         self.data_processor = DataProcessor()
         self.logger = logging.getLogger(self.__class__.__name__)
 
@@ -47,32 +49,33 @@ class AutonomousExplorer:
         fetched_data = []
 
         try:
-            current_url = search_url
-            link_queue = [current_url]
+            if len(self.link_queue) == 0:
+                current_url = search_url
+                self.link_queue = [current_url]
+                self.combined_text_content = ""  # Combine all texts here
 
-            combined_text_content = ""  # Combine all texts here
             MAX_TEXT_LENGTH = 250000  # Define a threshold for combined text length
 
-            while link_queue:
+            while self.link_queue:
                 # Get the first link from the queue
-                current_url = link_queue.pop(0)
+                current_url = self.link_queue.pop(0)
 
                 if current_url not in self.visited_urls:
                     content = self.data_processor.fetch_web_data(current_url)
                     soup = BeautifulSoup(content, 'html.parser')
                     text_content = soup.get_text(separator=' ', strip=True)
 
-                    combined_text_content += text_content + " "  # Append to the combined text
+                    self.combined_text_content += text_content + " "  # Append to the combined text
 
                     # If combined text exceeds a certain length, train the model and reset the text
-                    if len(combined_text_content) > MAX_TEXT_LENGTH:
+                    if len(self.combined_text_content) > MAX_TEXT_LENGTH:
                         self.genesis_mind.recursive_learn(
-                            combined_text_content)
+                            self.combined_text_content)
                         fetched_data.append(
-                            {"data": combined_text_content, "data_type": "text"})
+                            {"data": self.combined_text_content, "data_type": "text"})
                         self.logger.info(
-                            f"Releasing combined text with length: {len(combined_text_content)}")
-                        combined_text_content = ""  # Reset the combined text
+                            f"Releasing combined text with length: {len(self.combined_text_content)}")
+                        self.combined_text_content = ""  # Reset the combined text
 
                     if content:
                         self.visited_urls.add(current_url)
@@ -80,21 +83,21 @@ class AutonomousExplorer:
 
                         # Add discovered links to the queue
                         for link in links:
-                            if link not in self.visited_urls and link not in link_queue:
-                                link_queue.append(link)
+                            if link not in self.visited_urls and link not in self.link_queue:
+                                self.link_queue.append(link)
 
                     else:
                         self.logger.error(
                             f"Failed to fetch content from {current_url}. Trying a different search term.")
                         evolved_url = self.evolve_search_query(endpoint)
                         if evolved_url:
-                            link_queue.append(evolved_url)
+                            self.link_queue.append(evolved_url)
 
             # If there's any remaining text after the loop, train the model with it
-            if combined_text_content:
-                self.genesis_mind.recursive_learn(combined_text_content)
+            if self.combined_text_content:
+                self.genesis_mind.recursive_learn(self.combined_text_content)
                 fetched_data.append(
-                    {"data": combined_text_content, "data_type": "text"})
+                    {"data": self.combined_text_content, "data_type": "text"})
 
         except Exception as e:
             self.logger.error(f"Error during autonomous exploration: {e}")
@@ -170,7 +173,9 @@ class AutonomousExplorer:
 
             with open(path, 'wb') as f:
                 pickle.dump({
-                    'visited_urls': self.visited_urls
+                    'visited_urls': self.visited_urls,
+                    'link_queue': self.link_queue,
+                    'combined_text_content': self.combined_text_content
                 }, f)
 
             self.logger.info(f"AutonomousExplorer state saved to {path}.")
@@ -189,6 +194,8 @@ class AutonomousExplorer:
             with open(path, 'rb') as f:
                 saved_state = pickle.load(f)
                 self.visited_urls = saved_state['visited_urls']
+                self.link_queue = saved_state['link_queue']
+                self.combined_text_content = saved_state['combined_text_content']
 
             self.logger.info(f"AutonomousExplorer state loaded from {path}.")
         except Exception as e:

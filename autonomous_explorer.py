@@ -88,10 +88,7 @@ class AutonomousExplorer:
 
                     else:
                         self.logger.error(
-                            f"Failed to fetch content from {current_url}. Trying a different search term.")
-                        evolved_url = self.evolve_search_query(endpoint)
-                        if evolved_url:
-                            self.link_queue.append(evolved_url)
+                            f"Failed to fetch content from {current_url}.")
 
             # If there's any remaining text after the loop, train the model with it
             if self.combined_text_content:

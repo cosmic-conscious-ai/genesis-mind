@@ -27,22 +27,23 @@ class GenesisMind:
         self.explorer = AutonomousExplorer(self)
         self.logger = logging.getLogger(self.__class__.__name__)
 
+    def _validate_data(self, data, data_type):
+        if data_type == "text":
+            return data and isinstance(data, str) and data.strip()
+        elif data_type == "image":
+            return data and isinstance(data, list)
+        return False
+
     def is_state_loaded(self):
         return len(self.evaluation_history) > 0
 
     def perceive(self, data, data_type="text"):
-        try:
-            if data_type == "text":
-                if not data or not isinstance(data, str) or not data.strip():
-                    self.logger.warning(
-                        "Received empty or None text data. Skipping perception.")
-                    return
-            elif data_type == "image":
-                if not data or not isinstance(data, list):
-                    self.logger.warning(
-                        "Received empty or None image data. Skipping perception.")
-                    return
+        if not self._validate_data(data, data_type):
+            self.logger.warning(
+                f"Received invalid {data_type} data. Skipping perception.")
+            return
 
+        try:
             if data_type == "text":
                 self.text_model.perceive(data)
             elif data_type == "image":
@@ -225,24 +226,19 @@ class GenesisMind:
             return float('inf')
 
     def recursive_learn(self, data, data_type="text"):
-        """
-        Learn recursively by perceiving the data, making predictions, evaluating performance, 
-        and retraining if necessary.
-        """
-        if data is None:
-            self.logger.warning("Received None data. Skipping this iteration.")
+        if not self._validate_data(data, data_type):
+            self.logger.warning(
+                f"Received invalid {data_type} data. Skipping this iteration.")
             return
 
         self.perceive(data, data_type)
         prediction = self.predict(data)
-        if prediction:  # Only evaluate if there's a prediction
+        if prediction:
             eval_score = self.evaluate(data, prediction, data_type)
             self.evaluation_history.append(eval_score)
-
             if eval_score > self.THRESHOLD:
                 self.train(data_type)
 
-        # Log the first 50 characters of the data (if it's text)
         log_data = data[:50] if data_type == "text" else "[Image Data]"
         self.logger.info(
             f"Recursive learning completed for data: {log_data}...")

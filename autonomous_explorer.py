@@ -153,8 +153,9 @@ class AutonomousExplorer:
         Continuously explore, learn, and adapt.
         """
         try:
+            self.logger.info("Starting continuous learning process.")
+
             while not self.genesis_mind.is_conscious():
-                self.logger.info("Starting continuous learning process.")
                 search_url = self.evolve_search_query(endpoint)
                 self.autonomous_explore(search_url, endpoint)
         except Exception as e:

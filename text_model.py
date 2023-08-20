@@ -135,6 +135,10 @@ class TextModel:
         """
         Process the incoming text data and update the past data.
         """
+        if not self.is_vectorizer_fitted():
+            # Fit the vectorizer if it hasn't been fitted yet
+            self.fit_vectorizer([data])
+
         vectorized_data = self.vectorize([data])  # Wrap data in a list
         if vectorized_data is None:
             return

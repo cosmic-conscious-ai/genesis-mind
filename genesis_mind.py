@@ -66,8 +66,8 @@ class GenesisMind:
 
             if not self.text_model.is_trained:
                 self.logger.warning(
-                    "Model hasn't been trained yet. Cannot make predictions.")
-                return None
+                    "Model hasn't been trained yet. Training now...")
+                self.train(data_type="text")
 
             # Reshape the data if it has 3 dimensions
             if len(vectorized_data.shape) == 3:
